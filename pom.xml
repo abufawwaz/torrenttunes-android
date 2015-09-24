@@ -13,12 +13,25 @@
 		<it-plugin.version>4.3.0</it-plugin.version>
 	</properties>
 
+
 	<repositories>
 		<repository>
 			<id>android-support</id>
+			<name>android-support</name>
 			<url>file://${env.ANDROID_HOME}/extras/android/m2repository</url>
 		</repository>
+		<repository>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>central</id>
+			<name>bintray</name>
+			<url>http://jcenter.bintray.com</url>
+		</repository>
+
 	</repositories>
+
+
 
 	<build>
 		<sourceDirectory>src</sourceDirectory>
@@ -60,6 +73,65 @@
 			<artifactId>android</artifactId>
 			<version>4.1.1.4</version>
 			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.android.support</groupId>
+			<artifactId>appcompat-v7</artifactId>
+			<version>23.0.1</version>
+			<type>aar</type>
+		</dependency>
+		
+
+		<dependency>
+			<groupId>com.android.support</groupId>
+			<artifactId>support-v4</artifactId>
+			<version>23.0.1</version>
+			<type>aar</type>
+		</dependency>
+
+		<dependency>
+			<groupId>com.android.support</groupId>
+			<artifactId>cardview-v7</artifactId>
+			<version>22.0.0</version>
+			<type>aar</type>
+		</dependency>
+
+		<dependency>
+			<groupId>com.android.support</groupId>
+			<artifactId>mediarouter-v7</artifactId>
+			<version>22.0.0</version>
+			<type>aar</type>
+		</dependency>
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.github.amlcurran.showcaseview</groupId> -->
+<!-- 			<artifactId>library</artifactId> -->
+<!-- 			<version>5.0.0</version> -->
+<!-- 			<type>aar</type> -->
+<!-- 		</dependency> -->
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.chrisanderson.mediabrowsercompat</groupId> -->
+<!-- 			<artifactId>library</artifactId> -->
+<!-- 			<version>0.0.2</version> -->
+<!-- 			<type>aar</type> -->
+<!-- 		</dependency> -->
+
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.google.android.gms</groupId> -->
+<!-- 			<artifactId>play-services-cast</artifactId> -->
+<!-- 			<version>7.8.0</version> -->
+<!-- 			<type>aar</type> -->
+<!-- 		</dependency> -->
+
+		<dependency>
+			<groupId>fdsa</groupId>
+			<artifactId>asdf</artifactId>
+			<version>0.0.1</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/src/main/libs/CastCompanionLibrary-debug.aar</systemPath>
+			<type>aar</type>
 		</dependency>
 
 
