@@ -16,7 +16,7 @@
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.android.uamp" >
+    package="com.torrenttunes.android" >
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -34,7 +34,7 @@
         android:targetSdkVersion="21" />
 
     <application
-        android:name=".UAMPApplication"
+        android:name="com.torrenttunes.android.UAMPApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -49,7 +49,7 @@
 
         <!-- Main activity for music browsing on phone -->
         <activity
-            android:name=".ui.MusicPlayerActivity"
+            android:name="com.torrenttunes.android.ui.MusicPlayerActivity"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -65,7 +65,7 @@
 
         <!-- Placeholder activity for phone UI -->
         <activity
-            android:name=".ui.PlaceholderActivity"
+            android:name="com.torrenttunes.android.ui.PlaceholderActivity"
             android:label="@string/app_name">
         </activity>
 
@@ -73,7 +73,7 @@
         the current environment
         TODO:  TV is not yet supported, this is just a placeholder! -->
         <activity
-            android:name=".ui.NowPlayingActivity"
+            android:name="com.torrenttunes.android.ui.NowPlayingActivity"
             android:icon="@drawable/ic_launcher">
         </activity>
 
@@ -99,7 +99,7 @@
          consumers through MediaBrowserService and MediaSession. Consumers connect to it through
          MediaBrowser (for browsing) and MediaController (for play session control) -->
         <service
-            android:name=".MusicService"
+            android:name="com.torrenttunes.android.MusicService"
             android:exported="true"
             tools:ignore="ExportedService">
             <intent-filter>
@@ -107,7 +107,7 @@
             </intent-filter>
         </service>
 
-        <receiver android:name=".MediaButtonReceiver" />
+        <receiver android:name="com.torrenttunes.android.MediaButtonReceiver" />
 
 
         <!-- Service that keeps track of reconnecting to Cast when wifi is enabled. -->
@@ -117,13 +117,13 @@
         <!-- A full screen activity showing controls and a seek bar for
              the current playing music -->
         <activity
-            android:name=".ui.FullScreenPlayerActivity"
+            android:name="com.torrenttunes.android.ui.FullScreenPlayerActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:parentActivityName=".ui.MusicPlayerActivity">
+            android:parentActivityName="com.torrenttunes.android.ui.MusicPlayerActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.MusicPlayerActivity"/>
+                android:value="com.torrenttunes.android.ui.MusicPlayerActivity"/>
         </activity>
     </application>
 
