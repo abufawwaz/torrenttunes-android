@@ -27,7 +27,7 @@ import static com.google.android.libraries.cast.companionlibrary.cast.BaseCastMa
 /**
  * The {@link Application} for the uAmp application.
  */
-public class UAMPApplication extends Application  {
+public class Main extends Application  {
 
     @Override
     public void onCreate() {
