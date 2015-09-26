@@ -32,14 +32,29 @@ public class DrawerMenuContents {
     private Class[] activities;
 
     public DrawerMenuContents(Context ctx) {
-        activities = new Class[2];
-        items = new ArrayList<>(2);
+        int numOfActivities = 5;
+        activities = new Class[numOfActivities];
+        items = new ArrayList<>(numOfActivities);
 
-        activities[0] = MusicPlayerActivity.class;
-        items.add(populateDrawerItem(ctx.getString(R.string.drawer_allmusic_title),
-            R.drawable.ic_allmusic_black_24dp));
+        int aNum = 0;
 
-        activities[1] = PlaceholderActivity.class;
+        activities[aNum++] = MusicPlayerActivity.class;
+        items.add(populateDrawerItem(ctx.getString(R.string.drawer_home_title),
+                R.drawable.ic_allmusic_black_24dp));
+
+        activities[aNum++] = MusicPlayerActivity.class;
+        items.add(populateDrawerItem(ctx.getString(R.string.drawer_browse_title),
+                R.drawable.ic_allmusic_black_24dp));
+
+        activities[aNum++] = MusicPlayerActivity.class;
+        items.add(populateDrawerItem(ctx.getString(R.string.drawer_share_title),
+                R.drawable.ic_allmusic_black_24dp));
+
+        activities[aNum++] = MusicPlayerActivity.class;
+        items.add(populateDrawerItem(ctx.getString(R.string.drawer_library_title),
+                R.drawable.ic_allmusic_black_24dp));
+
+        activities[aNum++] = PlaceholderActivity.class;
         items.add(populateDrawerItem(ctx.getString(R.string.drawer_playlists_title),
             R.drawable.ic_playlist_music_black_24dp));
     }
