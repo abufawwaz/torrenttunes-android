@@ -54,6 +54,7 @@ package com.torrenttunes.android;
  import java.util.Collections;
  import java.util.List;
 
+ import static com.torrenttunes.android.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_ARTISTS;
  import static com.torrenttunes.android.utils.MediaIDHelper.MEDIA_ID_MUSICS_BY_GENRE;
  import static com.torrenttunes.android.utils.MediaIDHelper.MEDIA_ID_ROOT;
  import static com.torrenttunes.android.utils.MediaIDHelper.createBrowseCategoryMediaID;
@@ -354,37 +355,37 @@ public class MusicService extends MediaBrowserServiceCompat implements Playback.
             LogHelper.d(TAG, "OnLoadChildren.ROOT");
             mediaItems.add(new MediaBrowserCompat.MediaItem(
                     new MediaDescriptionCompat.Builder()
-                        .setMediaId(MEDIA_ID_MUSICS_BY_GENRE)
-                        .setTitle(getString(R.string.browse_genres))
+                        .setMediaId(MEDIA_ID_MUSICS_BY_ARTISTS)
+                        .setTitle(getString(R.string.browse_artists))
                         .setIconUri(Uri.parse("android.resource://" +
                                 "com.example.android.uamp/drawable/ic_by_genre"))
-                        .setSubtitle(getString(R.string.browse_genre_subtitle))
+                        .setSubtitle(getString(R.string.browse_artists_subtitle))
                         .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
             ));
 
-        } else if (MEDIA_ID_MUSICS_BY_GENRE.equals(parentMediaId)) {
-            LogHelper.d(TAG, "OnLoadChildren.GENRES");
-            for (String genre : mMusicProvider.getGenres()) {
+        } else if (MEDIA_ID_MUSICS_BY_ARTISTS.equals(parentMediaId)) {
+            LogHelper.d(TAG, "OnLoadChildren.ARTISTS");
+            for (String artist : mMusicProvider.getArtists()) {
                 MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(
                     new MediaDescriptionCompat.Builder()
-                        .setMediaId(createBrowseCategoryMediaID(MEDIA_ID_MUSICS_BY_GENRE, genre))
-                        .setTitle(genre)
-                        .setSubtitle(getString(R.string.browse_musics_by_genre_subtitle, genre))
+                        .setMediaId(createBrowseCategoryMediaID(MEDIA_ID_MUSICS_BY_ARTISTS, artist))
+                        .setTitle(artist)
+                        .setSubtitle(getString(R.string.browse_musics_by_artist_subtitle, artist))
                         .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
                 );
                 mediaItems.add(item);
             }
 
-        } else if (parentMediaId.startsWith(MEDIA_ID_MUSICS_BY_GENRE)) {
-            String genre = MediaIDHelper.getHierarchy(parentMediaId)[1];
-            LogHelper.d(TAG, "OnLoadChildren.SONGS_BY_GENRE  genre=", genre);
-            for (MediaMetadataCompat track : mMusicProvider.getMusicsByGenre(genre)) {
+        } else if (parentMediaId.startsWith(MEDIA_ID_MUSICS_BY_ARTISTS)) {
+            String artist = MediaIDHelper.getHierarchy(parentMediaId)[1];
+            LogHelper.d(TAG, "OnLoadChildren.SONGS_BY_GENRE  genre=", artist);
+            for (MediaMetadataCompat track : mMusicProvider.getMusicsByArtist(artist)) {
                 // Since mediaMetadata fields are immutable, we need to create a copy, so we
                 // can set a hierarchy-aware mediaID. We will need to know the media hierarchy
                 // when we get a onPlayFromMusicID call, so we can create the proper queue based
                 // on where the music was selected from (by artist, by genre, random, etc)
                 String hierarchyAwareMediaID = MediaIDHelper.createMediaID(
-                        track.getDescription().getMediaId(), MEDIA_ID_MUSICS_BY_GENRE, genre);
+                        track.getDescription().getMediaId(), MEDIA_ID_MUSICS_BY_ARTISTS, artist);
                 MediaMetadataCompat trackCopy = new MediaMetadataCompat.Builder(track)
                         .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, hierarchyAwareMediaID)
                         .build();
