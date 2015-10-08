@@ -58,5 +58,6 @@ dependencies {
     compile (name:'CastCompanionLibrary-debug', ext:'aar')
     compile 'com.github.amlcurran.showcaseview:library:5.0.0'
     compile 'com.chrisanderson.mediabrowsercompat:library:0.0.2'
+    compile 'com.tonicartos:superslim:0.4.13'
 
 }

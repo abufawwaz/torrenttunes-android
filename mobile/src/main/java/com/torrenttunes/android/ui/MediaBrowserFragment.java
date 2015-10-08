@@ -151,6 +151,7 @@ public class MediaBrowserFragment extends Fragment {
                              Bundle savedInstanceState) {
         LogHelper.d(TAG, "fragment.onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_list, container, false);
+//        View rootView = inflater.inflate(R.layout.browse_artists, container, false);
 
         mErrorView = rootView.findViewById(R.id.playback_error);
         mErrorMessage = (TextView) mErrorView.findViewById(R.id.error_message);

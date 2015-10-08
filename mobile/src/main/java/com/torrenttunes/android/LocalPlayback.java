@@ -154,58 +154,63 @@ public class LocalPlayback implements Playback, AudioManager.OnAudioFocusChangeL
 
     @Override
     public void play(QueueItem item) {
-        mPlayOnFocusGain = true;
-        tryToGetAudioFocus();
-        registerAudioNoisyReceiver();
-        String mediaId = item.getDescription().getMediaId();
-        boolean mediaHasChanged = !TextUtils.equals(mediaId, mCurrentMediaId);
-        if (mediaHasChanged) {
-            mCurrentPosition = 0;
-            mCurrentMediaId = mediaId;
-        }
 
-        if (mState == PlaybackState.STATE_PAUSED && !mediaHasChanged && mMediaPlayer != null) {
-            configMediaPlayerState();
-        } else {
-            mState = PlaybackState.STATE_STOPPED;
-            relaxResources(false); // release everything except MediaPlayer
-            MediaMetadataCompat track = mMusicProvider.getMusic(
-                    MediaIDHelper.extractMusicIDFromMediaID(item.getDescription().getMediaId()));
-
-            String source = track.getString(MusicProvider.CUSTOM_METADATA_TRACK_SOURCE);
-
-            try {
-                createMediaPlayerIfNeeded();
-
-                mState = PlaybackState.STATE_BUFFERING;
-
-                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                mMediaPlayer.setDataSource(source);
-
-                // Starts preparing the media player in the background. When
-                // it's done, it will call our OnPreparedListener (that is,
-                // the onPrepared() method on this class, since we set the
-                // listener to 'this'). Until the media player is prepared,
-                // we *cannot* call start() on it!
-                mMediaPlayer.prepareAsync();
-
-                // If we are streaming from the internet, we want to hold a
-                // Wifi lock, which prevents the Wifi radio from going to
-                // sleep while the song is playing.
-                mWifiLock.acquire();
-
-                if (mCallback != null) {
-                    mCallback.onPlaybackStatusChanged(mState);
-                }
-
-            } catch (IOException ex) {
-                LogHelper.e(TAG, ex, "Exception playing song");
-                if (mCallback != null) {
-                    mCallback.onError(ex.getMessage());
-                }
-            }
-        }
     }
+
+//    @Override
+//    public void play(QueueItem item) {
+//        mPlayOnFocusGain = true;
+//        tryToGetAudioFocus();
+//        registerAudioNoisyReceiver();
+//        String mediaId = item.getDescription().getMediaId();
+//        boolean mediaHasChanged = !TextUtils.equals(mediaId, mCurrentMediaId);
+//        if (mediaHasChanged) {
+//            mCurrentPosition = 0;
+//            mCurrentMediaId = mediaId;
+//        }
+//
+//        if (mState == PlaybackState.STATE_PAUSED && !mediaHasChanged && mMediaPlayer != null) {
+//            configMediaPlayerState();
+//        } else {
+//            mState = PlaybackState.STATE_STOPPED;
+//            relaxResources(false); // release everything except MediaPlayer
+//            MediaMetadataCompat track = mMusicProvider.getMusic(
+//                    MediaIDHelper.extractMusicIDFromMediaID(item.getDescription().getMediaId()));
+//
+//            String source = track.getString(MusicProvider.CUSTOM_METADATA_TRACK_SOURCE);
+//
+//            try {
+//                createMediaPlayerIfNeeded();
+//
+//                mState = PlaybackState.STATE_BUFFERING;
+//
+//                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+//                mMediaPlayer.setDataSource(source);
+//
+//                // Starts preparing the media player in the background. When
+//                // it's done, it will call our OnPreparedListener (that is,
+//                // the onPrepared() method on this class, since we set the
+//                // listener to 'this'). Until the media player is prepared,
+//                // we *cannot* call start() on it!
+//                mMediaPlayer.prepareAsync();
+//
+//                // If we are streaming from the internet, we want to hold a
+//                // Wifi lock, which prevents the Wifi radio from going to
+//                // sleep while the song is playing.
+//                mWifiLock.acquire();
+//
+//                if (mCallback != null) {
+//                    mCallback.onPlaybackStatusChanged(mState);
+//                }
+//
+//            } catch (IOException ex) {
+//                LogHelper.e(TAG, ex, "Exception playing song");
+//                if (mCallback != null) {
+//                    mCallback.onError(ex.getMessage());
+//                }
+//            }
+//        }
+//    }
 
     @Override
     public void pause() {

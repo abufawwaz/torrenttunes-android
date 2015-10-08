@@ -32,13 +32,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Utility class to get a list of MusicTrack's based on a server-side JSON
@@ -48,25 +49,35 @@ public class MusicProvider {
 
     private static final String TAG = LogHelper.makeLogTag(MusicProvider.class);
 
-    private static final String CATALOG_URL =
-        "http://storage.googleapis.com/automotive-media/music.json";
+//    private static final String CATALOG_URL =
+//        "http://storage.googleapis.com/automotive-media/music.json";
+
+    private static final String ARTIST_CATALOG_URL = "http://torrenttunes.ml/get_artists";
+    private static final String ARTIST_CATALOG_SONGS_URL = "http://torrenttunes.ml/get_all_songs";
+
 
     public static final String CUSTOM_METADATA_TRACK_SOURCE = "__SOURCE__";
 
-    private static final String JSON_MUSIC = "music";
-    private static final String JSON_TITLE = "title";
-    private static final String JSON_ALBUM = "album";
-    private static final String JSON_ARTIST = "artist";
-    private static final String JSON_GENRE = "genre";
-    private static final String JSON_SOURCE = "source";
-    private static final String JSON_IMAGE = "image";
-    private static final String JSON_TRACK_NUMBER = "trackNumber";
-    private static final String JSON_TOTAL_TRACK_COUNT = "totalTrackCount";
-    private static final String JSON_DURATION = "duration";
 
-    // Categorized caches for music track data:
-    private ConcurrentMap<String, List<MediaMetadataCompat>> mMusicListByGenre;
-    private final ConcurrentMap<String, MutableMediaMetadataCompat> mMusicListById;
+    private static final String JSON_ARTIST_NAME = "name";
+    private static final String JSON_ARTIST_MBID = "mbid";
+
+//    private static final String JSON_MUSIC = "music";
+//    private static final String JSON_TITLE = "title";
+//    private static final String JSON_ALBUM = "album";
+//    private static final String JSON_ARTIST = "artist";
+//    private static final String JSON_GENRE = "genre";
+//    private static final String JSON_SOURCE = "source";
+//    private static final String JSON_IMAGE = "image";
+//    private static final String JSON_TRACK_NUMBER = "trackNumber";
+//    private static final String JSON_TOTAL_TRACK_COUNT = "totalTrackCount";
+//    private static final String JSON_DURATION = "duration";
+
+    // Categorized caches for artist data:
+
+    private Map<String, String> mArtistCache;
+//    private ConcurrentMap<String, List<MediaMetadataCompat>> mMusicListByArtist;
+//    private final ConcurrentMap<String, MutableMediaMetadataCompat> mMusicListById;
 
     private final Set<String> mFavoriteTracks;
 
@@ -77,79 +88,80 @@ public class MusicProvider {
     private volatile State mCurrentState = State.NON_INITIALIZED;
 
     public interface Callback {
-        void onMusicCatalogReady(boolean success);
+        void onArtistCatalogReady(boolean success);
     }
 
     public MusicProvider() {
-        mMusicListByGenre = new ConcurrentHashMap<>();
-        mMusicListById = new ConcurrentHashMap<>();
+        mArtistCache = new LinkedHashMap<>();
+
         mFavoriteTracks = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
     }
 
     /**
-     * Get an iterator over the list of genres
+     * Get an iterator over the list of artists
      *
      * @return genres
      */
-    public Iterable<String> getGenres() {
+    public Map<String, String> getArtists() {
         if (mCurrentState != State.INITIALIZED) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
-        return mMusicListByGenre.keySet();
+        return mArtistCache;
+//        return mArtistCache.keySet();
     }
 
     /**
      * Get music tracks of the given genre
      *
      */
-    public Iterable<MediaMetadataCompat> getMusicsByGenre(String genre) {
-        if (mCurrentState != State.INITIALIZED || !mMusicListByGenre.containsKey(genre)) {
-            return Collections.emptyList();
-        }
-        return mMusicListByGenre.get(genre);
-    }
+//    public Iterable<MediaMetadataCompat> getMusicsByArtist(String artistMbid) {
+//        if (mCurrentState != State.INITIALIZED || !mMusicListByArtist.containsKey(artist)) {
+//            return Collections.emptyList();
+//        }
+//        return mMusicListByArtist.get(artist);
+//    }
 
     /**
      * Very basic implementation of a search that filter music tracks with title containing
      * the given query.
      *
      */
-    public Iterable<MediaMetadataCompat> searchMusicBySongTitle(String query) {
-        return searchMusic(MediaMetadataCompat.METADATA_KEY_TITLE, query);
-    }
+//    public Iterable<MediaMetadataCompat> searchMusicBySongTitle(String query) {
+//        return searchMusic(MediaMetadataCompat.METADATA_KEY_TITLE, query);
+//    }
 
     /**
      * Very basic implementation of a search that filter music tracks with album containing
      * the given query.
      *
      */
-    public Iterable<MediaMetadataCompat> searchMusicByAlbum(String query) {
-        return searchMusic(MediaMetadataCompat.METADATA_KEY_ALBUM, query);
-    }
+//    public Iterable<MediaMetadataCompat> searchMusicByAlbum(String query) {
+//        return searchMusic(MediaMetadataCompat.METADATA_KEY_ALBUM, query);
+//    }
 
     /**
      * Very basic implementation of a search that filter music tracks with artist containing
      * the given query.
      *
      */
-    public Iterable<MediaMetadataCompat> searchMusicByArtist(String query) {
-        return searchMusic(MediaMetadataCompat.METADATA_KEY_ARTIST, query);
-    }
+//    public Iterable<MediaMetadataCompat> searchMusicByArtist(String query) {
+//        return searchMusic(MediaMetadataCompat.METADATA_KEY_ARTIST, query);
+//    }
 
-    Iterable<MediaMetadataCompat> searchMusic(String metadataField, String query) {
-        if (mCurrentState != State.INITIALIZED) {
-            return Collections.emptyList();
-        }
-        ArrayList<MediaMetadataCompat> result = new ArrayList<>();
-        query = query.toLowerCase(Locale.US);
-        for (MutableMediaMetadataCompat track : mMusicListById.values()) {
-            if (track.metadata.getString(metadataField).toLowerCase(Locale.US)
-                .contains(query)) {
-                result.add(track.metadata);
-            }
-        }
-        return result;
-    }
+//    Iterable<MediaMetadataCompat> searchMusic(String metadataField, String query) {
+//        if (mCurrentState != State.INITIALIZED) {
+//            return Collections.emptyList();
+//        }
+//        ArrayList<MediaMetadataCompat> result = new ArrayList<>();
+//        query = query.toLowerCase(Locale.US);
+//        for (MutableMediaMetadataCompat track : mMusicListById.values()) {
+//            if (track.metadata.getString(metadataField).toLowerCase(Locale.US)
+//                .contains(query)) {
+//                result.add(track.metadata);
+//            }
+//        }
+//        return result;
+//    }
 
 
     /**
@@ -157,26 +169,26 @@ public class MusicProvider {
      *
      * @param musicId The unique, non-hierarchical music ID.
      */
-    public MediaMetadataCompat getMusic(String musicId) {
-        return mMusicListById.containsKey(musicId) ? mMusicListById.get(musicId).metadata : null;
-    }
+//    public MediaMetadataCompat getMusic(String musicId) {
+//        return mMusicListById.containsKey(musicId) ? mMusicListById.get(musicId).metadata : null;
+//    }
 
-    public synchronized void updateMusic(String musicId, MediaMetadataCompat metadata) {
-        MutableMediaMetadataCompat track = mMusicListById.get(musicId);
-        if (track == null) {
-            return;
-        }
-
-        String oldGenre = track.metadata.getString(MediaMetadataCompat.METADATA_KEY_GENRE);
-        String newGenre = metadata.getString(MediaMetadataCompat.METADATA_KEY_GENRE);
-
-        track.metadata = metadata;
-
-        // if genre has changed, we need to rebuild the list by genre
-        if (!oldGenre.equals(newGenre)) {
-            buildListsByGenre();
-        }
-    }
+//    public synchronized void updateMusic(String musicId, MediaMetadataCompat metadata) {
+//        MutableMediaMetadataCompat track = mMusicListById.get(musicId);
+//        if (track == null) {
+//            return;
+//        }
+//
+//        String oldArtist = track.metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+//        String newArtist = metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+//
+//        track.metadata = metadata;
+//
+//        // if genre has changed, we need to rebuild the list by genre
+//        if (!oldArtist.equals(newArtist)) {
+//            buildListsByArtist();
+//        }
+//    }
 
     public void setFavorite(String musicId, boolean favorite) {
         if (favorite) {
@@ -198,11 +210,11 @@ public class MusicProvider {
      * Get the list of music tracks from a server and caches the track information
      * for future reference, keying tracks by musicId and grouping by genre.
      */
-    public void retrieveMediaAsync(final Callback callback) {
-        LogHelper.d(TAG, "retrieveMediaAsync called");
+    public void retrieveArtistCatalogAsync(final Callback callback) {
+        LogHelper.d(TAG, "retrieveArtistsAsync called");
         if (mCurrentState == State.INITIALIZED) {
             // Nothing to do, execute callback immediately
-            callback.onMusicCatalogReady(true);
+            callback.onArtistCatalogReady(true);
             return;
         }
 
@@ -210,58 +222,65 @@ public class MusicProvider {
         new AsyncTask<Void, Void, State>() {
             @Override
             protected State doInBackground(Void... params) {
-                retrieveMedia();
+                retrieveArtists();
                 return mCurrentState;
             }
 
             @Override
             protected void onPostExecute(State current) {
                 if (callback != null) {
-                    callback.onMusicCatalogReady(current == State.INITIALIZED);
+                    callback.onArtistCatalogReady(current == State.INITIALIZED);
                 }
             }
         }.execute();
     }
 
-    private synchronized void buildListsByGenre() {
-        ConcurrentMap<String, List<MediaMetadataCompat>> newMusicListByGenre = new ConcurrentHashMap<>();
+//    private synchronized void buildListsByArtist() {
+//        ConcurrentMap<String, List<MediaMetadataCompat>> newMusicListByArtist = new ConcurrentHashMap<>();
+//
+//        for (MutableMediaMetadataCompat m : mMusicListById.values()) {
+//            String artist = m.metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+//            List<MediaMetadataCompat> list = newMusicListByArtist.get(artist);
+//            if (list == null) {
+//                list = new ArrayList<>();
+//                newMusicListByArtist.put(artist, list);
+//            }
+//            list.add(m.metadata);
+//        }
+//        mMusicListByArtist = newMusicListByArtist;
+//    }
 
-        for (MutableMediaMetadataCompat m : mMusicListById.values()) {
-            String genre = m.metadata.getString(MediaMetadataCompat.METADATA_KEY_GENRE);
-            List<MediaMetadataCompat> list = newMusicListByGenre.get(genre);
-            if (list == null) {
-                list = new ArrayList<>();
-                newMusicListByGenre.put(genre, list);
-            }
-            list.add(m.metadata);
-        }
-        mMusicListByGenre = newMusicListByGenre;
-    }
-
-    private synchronized void retrieveMedia() {
+    private synchronized void retrieveArtists() {
         try {
             if (mCurrentState == State.NON_INITIALIZED) {
                 mCurrentState = State.INITIALIZING;
 
-                int slashPos = CATALOG_URL.lastIndexOf('/');
-                String path = CATALOG_URL.substring(0, slashPos + 1);
-                JSONObject jsonObj = fetchJSONFromUrl(CATALOG_URL);
-                if (jsonObj == null) {
+                JSONArray jsonArray = fetchJSONArrayFromUrl(ARTIST_CATALOG_URL);
+                if (jsonArray == null) {
                     return;
                 }
-                JSONArray tracks = jsonObj.getJSONArray(JSON_MUSIC);
-                if (tracks != null) {
-                    for (int j = 0; j < tracks.length(); j++) {
-                        MediaMetadataCompat item = buildFromJSON(tracks.getJSONObject(j), path);
-                        String musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
-                        mMusicListById.put(musicId, new MutableMediaMetadataCompat(musicId, item));
+
+                if (jsonArray != null) {
+                    for (int j = 0; j < jsonArray.length(); j++) {
+                        JSONObject artistObj = jsonArray.getJSONObject(j);
+
+                        String artist = artistObj.getString(JSON_ARTIST_NAME);
+                        String artistMbid = artistObj.getString(JSON_ARTIST_MBID);
+                        mArtistCache.put(artistMbid, artist);
+
+//                        MediaMetadataCompat item = buildFromJSON(tracks.getJSONObject(j), path);
+//                        String musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
+//                        mMusicListById.put(musicId, new MutableMediaMetadataCompat(musicId, item))
+// ;
+
                     }
-                    buildListsByGenre();
+
+//                    buildListsByArtist();
                 }
                 mCurrentState = State.INITIALIZED;
             }
         } catch (JSONException e) {
-            LogHelper.e(TAG, e, "Could not retrieve music list");
+            LogHelper.e(TAG, e, "Could not retrieve artist list");
         } finally {
             if (mCurrentState != State.INITIALIZED) {
                 // Something bad happened, so we reset state to NON_INITIALIZED to allow
@@ -271,49 +290,54 @@ public class MusicProvider {
         }
     }
 
-    private MediaMetadataCompat buildFromJSON(JSONObject json, String basePath) throws JSONException {
-        String title = json.getString(JSON_TITLE);
-        String album = json.getString(JSON_ALBUM);
-        String artist = json.getString(JSON_ARTIST);
-        String genre = json.getString(JSON_GENRE);
-        String source = json.getString(JSON_SOURCE);
-        String iconUrl = json.getString(JSON_IMAGE);
-        int trackNumber = json.getInt(JSON_TRACK_NUMBER);
-        long totalTrackCount = json.getLong(JSON_TOTAL_TRACK_COUNT);
-        int duration = json.getInt(JSON_DURATION) * 1000; // ms
-
-        LogHelper.d(TAG, "Found music track: ", json);
-
-        // Media is stored relative to JSON file
-        if (!source.startsWith("http")) {
-            source = basePath + source;
-        }
-        if (!iconUrl.startsWith("http")) {
-            iconUrl = basePath + iconUrl;
-        }
-        // Since we don't have a unique ID in the server, we fake one using the hashcode of
-        // the music source. In a real world app, this could come from the server.
-        String id = String.valueOf(source.hashCode());
-
-        // Adding the music source to the MediaMetadataCompat (and consequently using it in the
-        // mediaSession.setMetadata) is not a good idea for a real world music app, because
-        // the session metadata can be accessed by notification listeners. This is done in this
-        // sample for convenience only.
-        return new MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id)
-                .putString(CUSTOM_METADATA_TRACK_SOURCE, source)
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
-                .putString(MediaMetadataCompat.METADATA_KEY_GENRE, genre)
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, iconUrl)
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
-                .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)
-               // Note: With MediaMetadataCompat we seem to crash when setting the total track count.
-               // .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, totalTrackCount * 1L)
-
-                .build();
+    public JSONArray fetchSongsByArtist(String artistMbid) {
+        String url = ARTIST_CATALOG_SONGS_URL + "/" + artistMbid;
+        return fetchJSONArrayFromUrl(url);
     }
+
+//    private MediaMetadataCompat buildFromJSON(JSONObject json, String basePath) throws JSONException {
+//        String title = json.getString(JSON_TITLE);
+//        String album = json.getString(JSON_ALBUM);
+//        String artist = json.getString(JSON_ARTIST);
+//        String genre = json.getString(JSON_GENRE);
+//        String source = json.getString(JSON_SOURCE);
+//        String iconUrl = json.getString(JSON_IMAGE);
+//        int trackNumber = json.getInt(JSON_TRACK_NUMBER);
+//        long totalTrackCount = json.getLong(JSON_TOTAL_TRACK_COUNT);
+//        int duration = json.getInt(JSON_DURATION) * 1000; // ms
+//
+//        LogHelper.d(TAG, "Found music track: ", json);
+//
+//        // Media is stored relative to JSON file
+//        if (!source.startsWith("http")) {
+//            source = basePath + source;
+//        }
+//        if (!iconUrl.startsWith("http")) {
+//            iconUrl = basePath + iconUrl;
+//        }
+//        // Since we don't have a unique ID in the server, we fake one using the hashcode of
+//        // the music source. In a real world app, this could come from the server.
+//        String id = String.valueOf(source.hashCode());
+//
+//        // Adding the music source to the MediaMetadataCompat (and consequently using it in the
+//        // mediaSession.setMetadata) is not a good idea for a real world music app, because
+//        // the session metadata can be accessed by notification listeners. This is done in this
+//        // sample for convenience only.
+//        return new MediaMetadataCompat.Builder()
+//                .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, id)
+//                .putString(CUSTOM_METADATA_TRACK_SOURCE, source)
+//                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
+//                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
+//                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
+//                .putString(MediaMetadataCompat.METADATA_KEY_GENRE, genre)
+//                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, iconUrl)
+//                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+//                .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)
+//               // Note: With MediaMetadataCompat we seem to crash when setting the total track count.
+//               // .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, totalTrackCount * 1L)
+//
+//                .build();
+//    }
 
     /**
      * Download a JSON file from a server, parse the content and return the JSON
@@ -335,6 +359,35 @@ public class MusicProvider {
                 sb.append(line);
             }
             return new JSONObject(sb.toString());
+        } catch (Exception e) {
+            LogHelper.e(TAG, "Failed to parse the json for media list", e);
+            return null;
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        }
+    }
+
+
+    private JSONArray fetchJSONArrayFromUrl(String urlString) {
+        InputStream is = null;
+        try {
+            URL url = new URL(urlString);
+            URLConnection urlConnection = url.openConnection();
+            is = new BufferedInputStream(urlConnection.getInputStream());
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    urlConnection.getInputStream(), "iso-8859-1"));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            return new JSONArray(sb.toString());
         } catch (Exception e) {
             LogHelper.e(TAG, "Failed to parse the json for media list", e);
             return null;

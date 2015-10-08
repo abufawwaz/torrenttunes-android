@@ -116,18 +116,19 @@ public class CastPlayback implements Playback {
 
     @Override
     public void play(QueueItem item) {
-        try {
-            loadMedia(item.getDescription().getMediaId(), true);
+//        try {
+//            loadMedia(item.getDescription().getMediaId(), true);
             mState = PlaybackStateCompat.STATE_BUFFERING;
             if (mCallback != null) {
                 mCallback.onPlaybackStatusChanged(mState);
             }
-        } catch (TransientNetworkDisconnectionException | NoConnectionException | JSONException e) {
-            LogHelper.e(TAG, "Exception loading media ", e, null);
-            if (mCallback != null) {
-                mCallback.onError(e.getMessage());
-            }
-        }
+//        }
+//        catch (TransientNetworkDisconnectionException | NoConnectionException | JSONException e) {
+//            LogHelper.e(TAG, "Exception loading media ", e, null);
+//            if (mCallback != null) {
+//                mCallback.onError(e.getMessage());
+//            }
+//        }
     }
 
     @Override
@@ -137,9 +138,9 @@ public class CastPlayback implements Playback {
                 mCastManager.pause();
                 mCurrentPosition = (int) mCastManager.getCurrentMediaPosition();
             } else {
-                loadMedia(mCurrentMediaId, false);
+//                loadMedia(mCurrentMediaId, false);
             }
-        } catch (JSONException | CastException | TransientNetworkDisconnectionException
+        } catch (CastException | TransientNetworkDisconnectionException
                 | NoConnectionException e) {
             LogHelper.e(TAG, e, "Exception pausing cast playback");
             if (mCallback != null) {
@@ -162,10 +163,9 @@ public class CastPlayback implements Playback {
                 mCurrentPosition = position;
             } else {
                 mCurrentPosition = position;
-                loadMedia(mCurrentMediaId, false);
+//                loadMedia(mCurrentMediaId, false);
             }
-        } catch (TransientNetworkDisconnectionException | NoConnectionException |
-                JSONException e) {
+        } catch (TransientNetworkDisconnectionException | NoConnectionException e) {
             LogHelper.e(TAG, e, "Exception pausing cast playback");
             if (mCallback != null) {
                 mCallback.onError(e.getMessage());
@@ -208,57 +208,57 @@ public class CastPlayback implements Playback {
         return mState;
     }
 
-    private void loadMedia(String mediaId, boolean autoPlay) throws
-        TransientNetworkDisconnectionException, NoConnectionException, JSONException {
-        String musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId);
-        MediaMetadataCompat track = mMusicProvider.getMusic(musicId);
-        if (!TextUtils.equals(mediaId, mCurrentMediaId)) {
-            mCurrentMediaId = mediaId;
-            mCurrentPosition = 0;
-        }
-        JSONObject customData = new JSONObject();
-        customData.put(ITEM_ID, mediaId);
-        MediaInfo media = toCastMediaMetadata(track, customData);
-        mCastManager.loadMedia(media, autoPlay, mCurrentPosition, customData);
-    }
+//    private void loadMedia(String mediaId, boolean autoPlay) throws
+//        TransientNetworkDisconnectionException, NoConnectionException, JSONException {
+//        String musicId = MediaIDHelper.extractMusicIDFromMediaID(mediaId);
+//        MediaMetadataCompat track = mMusicProvider.getMusic(musicId);
+//        if (!TextUtils.equals(mediaId, mCurrentMediaId)) {
+//            mCurrentMediaId = mediaId;
+//            mCurrentPosition = 0;
+//        }
+//        JSONObject customData = new JSONObject();
+//        customData.put(ITEM_ID, mediaId);
+//        MediaInfo media = toCastMediaMetadata(track, customData);
+//        mCastManager.loadMedia(media, autoPlay, mCurrentPosition, customData);
+//    }
 
-    /**
-     * Helper method to convert a {@link MediaMetadataCompat} to a
-     * {@link com.google.android.gms.cast.MediaInfo} used for sending media to the receiver app.
-     *
-     * @param track {@link com.google.android.gms.cast.MediaMetadata}
-     * @param customData custom data specifies the local mediaId used by the player.
-     * @return mediaInfo {@link com.google.android.gms.cast.MediaInfo}
-     */
-    private static MediaInfo toCastMediaMetadata(MediaMetadataCompat track,
-                                                 JSONObject customData) {
-
-        MediaMetadata mediaMetadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MUSIC_TRACK);
-        mediaMetadata.putString(MediaMetadata.KEY_TITLE,
-                track.getDescription().getTitle().toString());
-        mediaMetadata.putString(MediaMetadata.KEY_SUBTITLE,
-                track.getDescription().getSubtitle().toString());
-        mediaMetadata.putString(MediaMetadata.KEY_ALBUM_ARTIST,
-                track.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST));
-        mediaMetadata.putString(MediaMetadata.KEY_ALBUM_TITLE,
-                track.getString(MediaMetadataCompat.METADATA_KEY_ALBUM));
-        WebImage image = new WebImage(
-                new Uri.Builder().encodedPath(
-                        track.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI))
-                        .build());
-        // First image is used by the receiver for showing the audio album art.
-        mediaMetadata.addImage(image);
-        // Second image is used by Cast Companion Library on the full screen activity that is shown
-        // when the cast dialog is clicked.
-        mediaMetadata.addImage(image);
-
-        return new MediaInfo.Builder(track.getString(MusicProvider.CUSTOM_METADATA_TRACK_SOURCE))
-                .setContentType(MIME_TYPE_AUDIO_MPEG)
-                .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-                .setMetadata(mediaMetadata)
-                .setCustomData(customData)
-                .build();
-    }
+//    /**
+//     * Helper method to convert a {@link MediaMetadataCompat} to a
+//     * {@link com.google.android.gms.cast.MediaInfo} used for sending media to the receiver app.
+//     *
+//     * @param track {@link com.google.android.gms.cast.MediaMetadata}
+//     * @param customData custom data specifies the local mediaId used by the player.
+//     * @return mediaInfo {@link com.google.android.gms.cast.MediaInfo}
+//     */
+//    private static MediaInfo toCastMediaMetadata(MediaMetadataCompat track,
+//                                                 JSONObject customData) {
+//
+//        MediaMetadata mediaMetadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MUSIC_TRACK);
+//        mediaMetadata.putString(MediaMetadata.KEY_TITLE,
+//                track.getDescription().getTitle().toString());
+//        mediaMetadata.putString(MediaMetadata.KEY_SUBTITLE,
+//                track.getDescription().getSubtitle().toString());
+//        mediaMetadata.putString(MediaMetadata.KEY_ALBUM_ARTIST,
+//                track.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST));
+//        mediaMetadata.putString(MediaMetadata.KEY_ALBUM_TITLE,
+//                track.getString(MediaMetadataCompat.METADATA_KEY_ALBUM));
+//        WebImage image = new WebImage(
+//                new Uri.Builder().encodedPath(
+//                        track.getString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI))
+//                        .build());
+//        // First image is used by the receiver for showing the audio album art.
+//        mediaMetadata.addImage(image);
+//        // Second image is used by Cast Companion Library on the full screen activity that is shown
+//        // when the cast dialog is clicked.
+//        mediaMetadata.addImage(image);
+//
+//        return new MediaInfo.Builder(track.getString(MusicProvider.CUSTOM_METADATA_TRACK_SOURCE))
+//                .setContentType(MIME_TYPE_AUDIO_MPEG)
+//                .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
+//                .setMetadata(mediaMetadata)
+//                .setCustomData(customData)
+//                .build();
+//    }
 
     private void updateMetadata() {
         // Sync: We get the customData from the remote media information and update the local
