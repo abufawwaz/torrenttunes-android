@@ -373,8 +373,9 @@ public class MusicService extends MediaBrowserServiceCompat implements Playback.
             for (Map.Entry<String, String> artist : mMusicProvider.getArtists().entrySet()) {
                 MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(
                     new MediaDescriptionCompat.Builder()
-                        .setMediaId(MEDIA_ID_MUSICS_BY_ARTIST_SONG + "/" +
-                                artist.getKey())
+                        .setMediaId(MediaIDHelper.createBrowseCategoryMediaID(
+                                MEDIA_ID_MUSICS_BY_ARTIST_SONG,
+                                artist.getKey()))
                         .setTitle(artist.getValue())
 //                        .setSubtitle(getString(R.string.browse_musics_by_genre_subtitle, genre))
                         .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
@@ -386,8 +387,9 @@ public class MusicService extends MediaBrowserServiceCompat implements Playback.
         }
 
         else if (parentMediaId.startsWith(MEDIA_ID_MUSICS_BY_ARTIST_SONG)) {
-            LogHelper.i(TAG, parentMediaId + "GARP");
+            LogHelper.i(TAG, parentMediaId);
             String artistMbid = MediaIDHelper.getHierarchy(parentMediaId)[1];
+            LogHelper.i(artistMbid);
             LogHelper.d(TAG, "OnLoadChildren.ARTIST_SONGS  artist_mbid=", artistMbid);
 
             JSONArray songs = mMusicProvider.fetchSongsByArtist(artistMbid);
