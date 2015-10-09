@@ -76,6 +76,7 @@ public class MusicProvider {
     // Categorized caches for artist data:
 
     private Map<String, String> mArtistCache;
+    private JSONArray mCurrentArtistSongCache;
 //    private ConcurrentMap<String, List<MediaMetadataCompat>> mMusicListByArtist;
 //    private final ConcurrentMap<String, MutableMediaMetadataCompat> mMusicListById;
 
@@ -86,9 +87,14 @@ public class MusicProvider {
     }
 
     private volatile State mCurrentState = State.NON_INITIALIZED;
+    private volatile State mCurrentSongState = State.NON_INITIALIZED;
 
     public interface Callback {
         void onArtistCatalogReady(boolean success);
+    }
+
+    public interface ArtistSongCallback {
+        void onArtistSongCatalogReady(boolean success);
     }
 
     public MusicProvider() {
@@ -108,6 +114,10 @@ public class MusicProvider {
         }
         return mArtistCache;
 //        return mArtistCache.keySet();
+    }
+
+    public JSONArray getCurrentArtistSongs() {
+        return mCurrentArtistSongCache;
     }
 
     /**
@@ -235,6 +245,32 @@ public class MusicProvider {
         }.execute();
     }
 
+    public void retrieveArtistSongCatalogAsync(final String artistMbid, final ArtistSongCallback callback) {
+        LogHelper.d(TAG, "retrieveArtistsSongAsync called");
+
+        if (mCurrentSongState == State.INITIALIZED) {
+            // Nothing to do, execute callback immediately
+            callback.onArtistSongCatalogReady(true);
+            return;
+        }
+
+        // Asynchronously load the music catalog in a separate thread
+        new AsyncTask<Void, Void, State>() {
+            @Override
+            protected State doInBackground(Void... params) {
+                retrieveCurrentArtistSongs(artistMbid);
+                return mCurrentState;
+            }
+
+            @Override
+            protected void onPostExecute(State current) {
+                if (callback != null) {
+                    callback.onArtistSongCatalogReady(current == State.INITIALIZED);
+                }
+            }
+        }.execute();
+    }
+
 //    private synchronized void buildListsByArtist() {
 //        ConcurrentMap<String, List<MediaMetadataCompat>> newMusicListByArtist = new ConcurrentHashMap<>();
 //
@@ -290,10 +326,12 @@ public class MusicProvider {
         }
     }
 
-    public JSONArray fetchSongsByArtist(String artistMbid) {
-        String url = ARTIST_CATALOG_SONGS_URL + "/" + artistMbid;
-        return fetchJSONArrayFromUrl(url);
+    private synchronized void retrieveCurrentArtistSongs(String artistMbid) {
+        mCurrentArtistSongCache = fetchJSONArrayFromUrl(
+                ARTIST_CATALOG_SONGS_URL + "/" + artistMbid);
     }
+
+
 
 //    private MediaMetadataCompat buildFromJSON(JSONObject json, String basePath) throws JSONException {
 //        String title = json.getString(JSON_TITLE);
@@ -339,6 +377,8 @@ public class MusicProvider {
 //                .build();
 //    }
 
+
+
     /**
      * Download a JSON file from a server, parse the content and return the JSON
      * object.
@@ -372,6 +412,8 @@ public class MusicProvider {
             }
         }
     }
+
+
 
 
     private JSONArray fetchJSONArrayFromUrl(String urlString) {

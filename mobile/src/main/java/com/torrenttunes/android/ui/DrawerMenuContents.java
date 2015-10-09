@@ -42,6 +42,10 @@ public class DrawerMenuContents {
         activities[1] = PlaceholderActivity.class;
         items.add(populateDrawerItem(ctx.getString(R.string.drawer_playlists_title),
             R.drawable.ic_playlist_music_black_24dp));
+
+        activities[2] = BrowseActivity.class;
+        items.add(populateDrawerItem(ctx.getString(R.string.drawer_browse_title),
+                R.drawable.ic_playlist_music_black_24dp));
     }
 
     public List<Map<String, ?>> getItems() {
