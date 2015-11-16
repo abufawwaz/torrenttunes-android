@@ -20,6 +20,7 @@ import android.os.AsyncTask;
 import android.support.v4.media.MediaMetadataCompat;
 
 import com.torrenttunes.android.utils.LogHelper;
+import com.torrenttunes.android.utils.Tools;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -53,8 +54,8 @@ public class MusicProvider {
 //        "http://storage.googleapis.com/automotive-media/music.json";
 
     private static final String ARTIST_CATALOG_URL = "http://torrenttunes.ml/get_artists";
-    private static final String ARTIST_CATALOG_SONGS_URL = "http://torrenttunes.ml/get_all_songs";
 
+    private static final String ARTIST_CATALOG_SONGS_URL = "http://torrenttunes.ml/get_all_songs";
 
     public static final String CUSTOM_METADATA_TRACK_SOURCE = "__SOURCE__";
 
@@ -291,7 +292,7 @@ public class MusicProvider {
             if (mCurrentState == State.NON_INITIALIZED) {
                 mCurrentState = State.INITIALIZING;
 
-                JSONArray jsonArray = fetchJSONArrayFromUrl(ARTIST_CATALOG_URL);
+                JSONArray jsonArray = Tools.fetchJSONArrayFromUrl(ARTIST_CATALOG_URL);
                 if (jsonArray == null) {
                     return;
                 }
@@ -303,6 +304,8 @@ public class MusicProvider {
                         String artist = artistObj.getString(JSON_ARTIST_NAME);
                         String artistMbid = artistObj.getString(JSON_ARTIST_MBID);
                         mArtistCache.put(artistMbid, artist);
+
+//                        LogHelper.i(TAG, artistMbid + "/" + artist);
 
 //                        MediaMetadataCompat item = buildFromJSON(tracks.getJSONObject(j), path);
 //                        String musicId = item.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
@@ -327,7 +330,8 @@ public class MusicProvider {
     }
 
     private synchronized void retrieveCurrentArtistSongs(String artistMbid) {
-        mCurrentArtistSongCache = fetchJSONArrayFromUrl(
+
+        mCurrentArtistSongCache = Tools.fetchJSONArrayFromUrl(
                 ARTIST_CATALOG_SONGS_URL + "/" + artistMbid);
     }
 
@@ -379,68 +383,5 @@ public class MusicProvider {
 
 
 
-    /**
-     * Download a JSON file from a server, parse the content and return the JSON
-     * object.
-     *
-     * @return result JSONObject containing the parsed representation.
-     */
-    private JSONObject fetchJSONFromUrl(String urlString) {
-        InputStream is = null;
-        try {
-            URL url = new URL(urlString);
-            URLConnection urlConnection = url.openConnection();
-            is = new BufferedInputStream(urlConnection.getInputStream());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    urlConnection.getInputStream(), "iso-8859-1"));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-            }
-            return new JSONObject(sb.toString());
-        } catch (Exception e) {
-            LogHelper.e(TAG, "Failed to parse the json for media list", e);
-            return null;
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
-        }
-    }
 
-
-
-
-    private JSONArray fetchJSONArrayFromUrl(String urlString) {
-        InputStream is = null;
-        try {
-            URL url = new URL(urlString);
-            URLConnection urlConnection = url.openConnection();
-            is = new BufferedInputStream(urlConnection.getInputStream());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    urlConnection.getInputStream(), "iso-8859-1"));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-            }
-            return new JSONArray(sb.toString());
-        } catch (Exception e) {
-            LogHelper.e(TAG, "Failed to parse the json for media list", e);
-            return null;
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
-        }
-    }
 }

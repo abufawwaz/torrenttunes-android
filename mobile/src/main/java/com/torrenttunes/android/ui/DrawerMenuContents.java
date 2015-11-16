@@ -32,8 +32,8 @@ public class DrawerMenuContents {
     private Class[] activities;
 
     public DrawerMenuContents(Context ctx) {
-        activities = new Class[2];
-        items = new ArrayList<>(2);
+        activities = new Class[3];
+        items = new ArrayList<>(3);
 
         activities[0] = MusicPlayerActivity.class;
         items.add(populateDrawerItem(ctx.getString(R.string.drawer_allmusic_title),

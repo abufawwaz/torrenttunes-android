@@ -324,25 +324,49 @@ public class MusicService extends MediaBrowserServiceCompat implements Playback.
 
     @Override
     public void onLoadChildren(final String parentMediaId, final Result<List<MediaBrowserCompat.MediaItem>> result) {
-        if (!mMusicProvider.isInitialized()) {
-            // Use result.detach to allow calling result.sendResult from another thread:
-            result.detach();
+        LogHelper.i(TAG, parentMediaId);
 
-            mMusicProvider.retrieveArtistCatalogAsync(new MusicProvider.Callback() {
-                @Override
-                public void onArtistCatalogReady(boolean success) {
-                    if (success) {
-                        loadChildrenImpl(parentMediaId, result);
-                    } else {
-                        updatePlaybackState(getString(R.string.error_no_metadata));
-                        result.sendResult(Collections.<MediaBrowserCompat.MediaItem>emptyList());
+        if (parentMediaId.equals(MEDIA_ID_MUSICS_BY_ARTIST) || parentMediaId.equals(MEDIA_ID_ROOT)) {
+
+            if (!mMusicProvider.isInitialized()) {
+                // Use result.detach to allow calling result.sendResult from another thread:
+                result.detach();
+
+                mMusicProvider.retrieveArtistCatalogAsync(new MusicProvider.Callback() {
+                    @Override
+                    public void onArtistCatalogReady(boolean success) {
+                        if (success) {
+                            loadChildrenImpl(parentMediaId, result);
+                        } else {
+                            updatePlaybackState(getString(R.string.error_no_metadata));
+                            result.sendResult(Collections.<MediaBrowserCompat.MediaItem>emptyList());
+                        }
                     }
-                }
-            });
+                });
 
-        } else {
-            // If our music catalog is already loaded/cached, load them into result immediately
-            loadChildrenImpl(parentMediaId, result);
+            } else {
+                // If our music catalog is already loaded/cached, load them into result immediately
+                loadChildrenImpl(parentMediaId, result);
+            }
+        } else if (parentMediaId.startsWith(MEDIA_ID_MUSICS_BY_ARTIST_SONG)) {
+
+                // Use result.detach to allow calling result.sendResult from another thread:
+                result.detach();
+
+                String artistMbid = MediaIDHelper.getHierarchy(parentMediaId)[1];
+
+                mMusicProvider.retrieveArtistSongCatalogAsync(artistMbid, new MusicProvider.ArtistSongCallback() {
+                    @Override
+                    public void onArtistSongCatalogReady(boolean success) {
+                        if (success) {
+                            loadChildrenImpl(parentMediaId, result);
+                        } else {
+                            updatePlaybackState(getString(R.string.error_no_metadata));
+                            result.sendResult(Collections.<MediaBrowserCompat.MediaItem>emptyList());
+                        }
+                    }
+                });
+            
         }
     }
 
@@ -352,7 +376,7 @@ public class MusicService extends MediaBrowserServiceCompat implements Playback.
      */
     private void loadChildrenImpl(final String parentMediaId,
                                   final Result<List<MediaBrowserCompat.MediaItem>> result) {
-        LogHelper.d(TAG, "OnLoadChildren: parentMediaId=", parentMediaId);
+        LogHelper.i(TAG, "OnLoadChildren: parentMediaId=", parentMediaId);
 
         final List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
 
@@ -371,55 +395,82 @@ public class MusicService extends MediaBrowserServiceCompat implements Playback.
         } else if (MEDIA_ID_MUSICS_BY_ARTIST.equals(parentMediaId)) {
             LogHelper.i(TAG, "OnLoadChildren.ARTISTS");
             for (Map.Entry<String, String> artist : mMusicProvider.getArtists().entrySet()) {
+
+                String hierarchyAwareMediaID = MediaIDHelper.createMediaID(
+                        artist.getValue(), MEDIA_ID_MUSICS_BY_ARTIST_SONG, artist.getKey());
+
                 MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(
                     new MediaDescriptionCompat.Builder()
-                        .setMediaId(MediaIDHelper.createBrowseCategoryMediaID(
-                                MEDIA_ID_MUSICS_BY_ARTIST,
-                                artist.getKey()))
+                        .setMediaId(hierarchyAwareMediaID)
                         .setTitle(artist.getValue())
 //                        .setSubtitle(getString(R.string.browse_musics_by_genre_subtitle, genre))
                         .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
                 );
 
                 mediaItems.add(item);
+
             }
 
         }
 
-        else if (parentMediaId.startsWith(MEDIA_ID_MUSICS_BY_ARTIST)) {
+        else if (parentMediaId.startsWith(MEDIA_ID_MUSICS_BY_ARTIST_SONG)) {
             LogHelper.i(TAG, parentMediaId);
+            LogHelper.i(TAG, "parent_id = " + MediaIDHelper.getHierarchy(parentMediaId)[0]);
+//            LogHelper.i(TAG, MediaIDHelper.extractMusicIDFromMediaID(MEDIA_ID_MUSICS_BY_ARTIST_SONG));
             String artistMbid = MediaIDHelper.getHierarchy(parentMediaId)[1];
-            LogHelper.d(TAG, "OnLoadChildren.ARTIST_SONGS  artist_mbid=", artistMbid);
+            LogHelper.i(TAG, "OnLoadChildren.ARTIST_SONGS  artist_mbid=", artistMbid);
 
+            JSONArray songs = mMusicProvider.getCurrentArtistSongs();
 
-            mMusicProvider.retrieveArtistSongCatalogAsync(artistMbid, new MusicProvider.ArtistSongCallback() {
-                @Override
-                public void onArtistSongCatalogReady(boolean success) {
-                    if (success) {
+            for (int i = 0; i < songs.length(); i++) {
+                try {
+                JSONObject song = songs.getJSONObject(i);
 
-                        JSONArray songs = mMusicProvider.getCurrentArtistSongs();
-
-
-                        for (int i = 0; i < songs.length(); i++) {
-                            try {
-                                JSONObject song = songs.getJSONObject(i);
-                                LogHelper.i(TAG, song.toString(1));
-                                MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(
+                MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(
                                         new MediaDescriptionCompat.Builder()
-                                                .setMediaId(MEDIA_ID_MUSICS_BY_ARTIST)
+                                                .setMediaId(MEDIA_ID_MUSICS_BY_ARTIST_SONG)
                                                 .setTitle(song.getString("title"))
 //                        .setSubtitle(getString(R.string.browse_musics_by_genre_subtitle, genre))
                                                 .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
                                 );
 
+
                                 mediaItems.add(item);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
+                                LogHelper.i(TAG, item);
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
-            });
+            }
+
+//            mMusicProvider.retrieveArtistSongCatalogAsync(artistMbid, new MusicProvider.ArtistSongCallback() {
+//                @Override
+//                public void onArtistSongCatalogReady(boolean success) {
+//                    if (success) {
+//
+//                        JSONArray songs = mMusicProvider.getCurrentArtistSongs();
+//
+//
+//                        for (int i = 0; i < songs.length(); i++) {
+//                            try {
+//                                JSONObject song = songs.getJSONObject(i);
+////                                LogHelper.i(TAG, song.toString(1));
+//                                MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(
+//                                        new MediaDescriptionCompat.Builder()
+//                                                .setMediaId(MEDIA_ID_MUSICS_BY_ARTIST_SONG)
+//                                                .setTitle(song.getString("title"))
+////                        .setSubtitle(getString(R.string.browse_musics_by_genre_subtitle, genre))
+//                                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+//                                );
+//
+//                                mediaItems.add(item);
+//                                LogHelper.i(TAG, item);
+//                            } catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                    }
+//                }
+//            });
 
 
         }
