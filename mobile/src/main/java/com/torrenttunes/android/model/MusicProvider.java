@@ -83,12 +83,12 @@ public class MusicProvider {
 
     private final Set<String> mFavoriteTracks;
 
-    enum State {
+    public enum State {
         NON_INITIALIZED, INITIALIZING, INITIALIZED
     }
 
     private volatile State mCurrentState = State.NON_INITIALIZED;
-    private volatile State mCurrentSongState = State.NON_INITIALIZED;
+    public volatile State mCurrentSongState = State.NON_INITIALIZED;
 
     public interface Callback {
         void onArtistCatalogReady(boolean success);

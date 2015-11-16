@@ -350,6 +350,7 @@ public class MusicService extends MediaBrowserServiceCompat implements Playback.
             }
         } else if (parentMediaId.startsWith(MEDIA_ID_MUSICS_BY_ARTIST_SONG)) {
 
+            if (mMusicProvider.mCurrentSongState == MusicProvider.State.NON_INITIALIZED) {
                 // Use result.detach to allow calling result.sendResult from another thread:
                 result.detach();
 
@@ -366,7 +367,10 @@ public class MusicService extends MediaBrowserServiceCompat implements Playback.
                         }
                     }
                 });
-            
+            } else {
+                // If our music catalog is already loaded/cached, load them into result immediately
+                loadChildrenImpl(parentMediaId, result);
+            }
         }
     }
 
